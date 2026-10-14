@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Floating Video — Settings</title>
+<link rel="stylesheet" href="options.css">
+<main>
+  <img src="assets/icon128.png" width="56" height="56" alt="">
+  <h1>Floating Video</h1>
+  <p>Keep watching while you do something else.</p>
+  <section aria-labelledby="automatic-heading">
+    <h2 id="automatic-heading">Automatic Picture-in-Picture</h2>
+    <label><input id="automatic" type="checkbox" disabled aria-describedby="automatic-help"> Open a playing video when I leave its tab</label>
+    <p id="automatic-help">Optional and off by default. Chrome decides when a site is eligible and may ask for permission. Automatic mode needs Chrome 134 or later and playing, audible video in the main page. Chrome closes an automatically opened window when you return.</p>
+    <p>This can replace a site's own automatic Picture-in-Picture handler. Reload the page after turning it off to restore the site's handler.</p>
+    <p id="status" role="status" aria-live="polite"></p>
+  </section>
+  <p>Use the toolbar button or <kbd>Alt</kbd> + <kbd>P</kbd> to toggle Picture-in-Picture manually. Playing videos take priority; otherwise the largest ready video is selected.</p>
+  <p>Pages protected by Chrome and some embedded players cannot use Picture-in-Picture. If an action fails, the toolbar icon shows <strong>!</strong>; its tooltip explains the error.</p>
+</main>
+<script src="options.js"></script>
+</html>

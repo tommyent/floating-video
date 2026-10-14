@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Floating Video",
+  "version": "1.0.0",
+  "description": "Keep a video in view with Picture-in-Picture. Toggle with the toolbar or Alt+P, with optional automatic mode.",
+  "minimum_chrome_version": "106",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "Floating Video — toggle Picture-in-Picture (Alt+P)",
+    "default_icon": { "16": "assets/icon16.png", "32": "assets/icon32.png" }
+  },
+  "icons": { "16": "assets/icon16.png", "48": "assets/icon48.png", "128": "assets/icon128.png" },
+  "commands": { "_execute_action": { "suggested_key": { "default": "Alt+P" } } },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["pip.js", "automatic.js"],
+    "run_at": "document_idle"
+  }]
+}
