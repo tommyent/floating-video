@@ -10,7 +10,7 @@ The settings page offers optional automatic mode, off by default. Chrome control
 
 Automatic mode can replace a site's media-session PiP handler. After disabling it, reload the site to restore its own handler. It does not register a handler while disabled on a fresh page.
 
-The manual action temporarily clears a video's PiP opt-out attribute and restores it after the request settles. It cannot bypass Chrome's restricted pages, Permissions Policy, or other browser restrictions. Errors appear as a **!** toolbar badge with an explanation in the tooltip.
+The manual action temporarily clears a video's PiP opt-out attribute and restores it when the PiP window closes or the request fails (Chrome closes PiP as soon as the attribute returns). It cannot bypass Chrome's restricted pages, Permissions Policy, or other browser restrictions. Errors appear as a **!** toolbar badge with an explanation in the tooltip.
 
 ## Permissions and privacy
 
@@ -30,7 +30,9 @@ node --test
 
 Tests use Node's built-in runner and simulated Chrome/DOM APIs. They cover video selection, frame targeting, PiP rejection, repeat clicks, automatic-mode settings races, unsupported APIs, settings persistence errors, and packaged asset references.
 
-**Verification limit:** native Chrome PiP, real-site compatibility, keyboard activation, and the settings accessibility tree have not been tested in a live browser. The test suite establishes logic results, not those browser outcomes.
+The toolbar handler starts script injection immediately and uses Chrome API callbacks through frame selection and the PiP request, keeping asynchronous badge updates out of that path. Regression tests check this call ordering and API-error feedback.
+
+**Live check (Chrome 155, Paramount+, 2026-10-13):** Alt+P opened PiP on a video that carries `disablepictureinpicture`, and the window stayed open; the attribute came back after PiP closed. Before this fix, PiP closed within 3 ms of opening. Other sites, automatic mode, and the settings accessibility tree remain unverified. The test suite establishes simulated logic results, not those browser outcomes.
 
 ## Create the private GitHub repository
 

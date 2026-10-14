@@ -22,14 +22,17 @@
 
   async function open(video) {
     if (!document.pictureInPictureEnabled) throw new Error('Picture-in-Picture is blocked on this page.');
-    // Restore the page's opt-out even when the browser rejects the request.
+    // Chrome closes PiP as soon as the opt-out returns, so restore it only when the window closes or the request fails.
     const disabled = video.getAttribute('disablepictureinpicture');
+    const restore = () => { if (disabled !== null) video.setAttribute('disablepictureinpicture', disabled); };
     video.removeAttribute('disablepictureinpicture');
     try {
       await video.requestPictureInPicture();
-    } finally {
-      if (disabled !== null) video.setAttribute('disablepictureinpicture', disabled);
+    } catch (error) {
+      restore();
+      throw error;
     }
+    video.addEventListener('leavepictureinpicture', restore, { once: true });
   }
 
   globalThis.FloatingVideo = { findVideo, open };

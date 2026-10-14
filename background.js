@@ -1,22 +1,29 @@
 const title = 'Floating Video — toggle Picture-in-Picture (Alt+P)';
 const busyTabs = new Set();
 
-chrome.action.onClicked.addListener(async tab => {
+chrome.action.onClicked.addListener(tab => {
   if (!Number.isInteger(tab.id) || busyTabs.has(tab.id)) return;
   busyTabs.add(tab.id);
-  try {
-    await chrome.action.setBadgeText({ tabId: tab.id, text: '' });
-    await chrome.action.setTitle({ tabId: tab.id, title });
-    const frames = await chrome.scripting.executeScript({
-      target: { tabId: tab.id, allFrames: true }, files: ['pip.js']
-    });
+  function finish(error) {
+    busyTabs.delete(tab.id);
+    void Promise.allSettled([
+      chrome.action.setBadgeText({ tabId: tab.id, text: error ? '!' : '' }),
+      chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#AD342A' }),
+      chrome.action.setTitle({ tabId: tab.id, title: error ? `Floating Video — ${error}` : title })
+    ]);
+  }
+  // Chrome carries the toolbar gesture into API callbacks, not awaited promises.
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id, allFrames: true }, files: ['pip.js']
+  }, frames => {
+    if (chrome.runtime.lastError) return finish(chrome.runtime.lastError.message);
     const active = frames.find(frame => frame.result?.active);
     const selected = active || frames.filter(frame => frame.result?.available).sort((a, b) =>
       Number(b.result.playing) - Number(a.result.playing) || b.result.area - a.result.area
     )[0];
-    if (!selected) throw new Error('No playable video found. Start a video and try again.');
+    if (!selected) return finish('No playable video found. Start a video and try again.');
     // Pin the document so navigation cannot redirect the action to a replacement page.
-    const results = await chrome.scripting.executeScript({
+    chrome.scripting.executeScript({
       target: { tabId: tab.id, documentIds: [selected.documentId] },
       args: [!!active],
       func: async close => {
@@ -33,15 +40,9 @@ chrome.action.onClicked.addListener(async tab => {
           return { error: error.message || 'Picture-in-Picture could not be opened.' };
         }
       }
+    }, results => {
+      if (chrome.runtime.lastError) return finish(chrome.runtime.lastError.message);
+      finish(results[0]?.result?.ok ? null : results[0]?.result?.error || 'The page changed. Try again.');
     });
-    if (!results[0]?.result?.ok) throw new Error(results[0]?.result?.error || 'The page changed. Try again.');
-  } catch (error) {
-    await Promise.allSettled([
-      chrome.action.setBadgeText({ tabId: tab.id, text: '!' }),
-      chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#AD342A' }),
-      chrome.action.setTitle({ tabId: tab.id, title: `Floating Video — ${error.message}` })
-    ]);
-  } finally {
-    busyTabs.delete(tab.id);
-  }
+  });
 });

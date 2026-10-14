@@ -48,9 +48,10 @@ test('paused fallback excludes ended, unloaded, audio-only, errored and zero-siz
   assert.equal(page([target], { pictureInPictureEnabled: false }).result.available, false);
 });
 
-test('site opt-out is temporarily removed and restored on success and failure', async () => {
+test('site opt-out stays removed while PiP is open and returns when it closes or fails', async () => {
   for (const fail of [false, true]) {
-    const target = video(20);
+    let leave;
+    const target = video(20, false, { addEventListener: (type, fn) => { if (type === 'leavepictureinpicture') leave = fn; } });
     target.setAttribute('disablepictureinpicture', 'original');
     target.requestPictureInPicture = async () => {
       assert.equal(target.getAttribute('disablepictureinpicture'), null);
@@ -58,7 +59,12 @@ test('site opt-out is temporarily removed and restored on success and failure', 
     };
     const promise = page([target]).api.open(target);
     if (fail) await assert.rejects(promise, /blocked/);
-    else await promise;
+    else {
+      await promise;
+      // Chrome closes PiP the moment the opt-out returns (seen live on Paramount+).
+      assert.equal(target.getAttribute('disablepictureinpicture'), null);
+      leave();
+    }
     assert.equal(target.getAttribute('disablepictureinpicture'), 'original');
   }
 });
@@ -67,16 +73,30 @@ function worker(frames, outcome = [{ result: { ok: true } }]) {
   let click;
   const calls = [], badges = [], titles = [];
   const chrome = {
+    runtime: {},
     action: {
       onClicked: { addListener: fn => { click = fn; } },
       setBadgeText: async value => { badges.push(value); },
       setBadgeBackgroundColor: async () => {},
       setTitle: async value => { titles.push(value); }
     },
-    scripting: { executeScript: async request => {
+    scripting: { executeScript: (request, callback) => {
       calls.push(request);
-      if (calls.length === 1) return typeof frames === 'function' ? frames() : frames;
-      return outcome;
+      assert.equal(typeof callback, 'function', 'Keep injections on Chrome’s gesture-preserving callback path');
+      const fail = error => {
+        chrome.runtime.lastError = error;
+        try { callback(); } finally { delete chrome.runtime.lastError; }
+      };
+      let result;
+      try {
+        result = calls.length === 1 ? (typeof frames === 'function' ? frames() : frames) :
+          (typeof outcome === 'function' ? outcome() : outcome);
+      } catch (error) {
+        fail(error);
+        return;
+      }
+      if (result?.then) result.then(callback, fail);
+      else callback(result);
     } }
   };
   vm.runInNewContext(source('background.js'), { chrome });
@@ -91,6 +111,13 @@ test('toolbar selects only one document across frames, prioritizing playing vide
   assert.equal(w.calls.length, 2);
   assert.deepEqual(Array.from(w.calls[1].target.documentIds), ['large']);
   assert.equal(w.calls[1].args[0], false);
+});
+
+test('toolbar starts injection synchronously before any awaited UI work', () => {
+  const w = worker([frame('main', 10, true)]);
+  w.click({ id: 7 });
+  assert.equal(w.calls.length, 2);
+  assert.equal(w.badges.at(-1).text, '');
 });
 
 test('active PiP closes instead of opening another frame', async () => {
@@ -121,6 +148,7 @@ test('injected action opens selected video and reports rejection', async () => {
 
 test('no video, restricted pages, and navigation failures produce error feedback', async () => {
   for (const w of [worker([]), worker(() => { throw new Error('restricted'); }),
+    worker([frame('main', 10, true)], () => { throw new Error('restricted'); }),
     worker([frame('main', 10, true)], []), worker([frame('main', 10, true)], [{ result: { error: 'denied' } }])]) {
     await w.click({ id: 7 });
     assert.equal(w.badges.at(-1).text, '!');
