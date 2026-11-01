@@ -1,0 +1,80 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Floating Video next-episode fixture</title>
+<style>video { width: 640px; height: 360px; } pre { white-space: pre-wrap; }</style>
+<label>Transition <select id="mode">
+  <option value="replace">Replace video (old element remains attached)</option>
+  <option value="remove">Replace video (remove old element first)</option>
+  <option value="source">Change source on same video</option>
+</select></label>
+<button id="start" disabled>Start two episodes in PiP</button>
+<div id="player"></div><pre id="log"></pre>
+<script src="../pip.js"></script>
+<script>
+const log = message => {
+  document.querySelector('#log').textContent += `${message}\n`;
+};
+const clips = [];
+async function clip(color) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 640; canvas.height = 360;
+  const context = canvas.getContext('2d');
+  const stream = canvas.captureStream(10);
+  const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+  const chunks = [];
+  recorder.ondataavailable = event => chunks.push(event.data);
+  const done = new Promise(resolve => { recorder.onstop = resolve; });
+  recorder.start();
+  const timer = setInterval(() => {
+    context.fillStyle = color;
+    context.fillRect(0, 0, 640, 360);
+    context.fillStyle = 'white'; context.font = '36px sans-serif';
+    context.fillText(color + ' episode ' + Date.now(), 20, 180);
+  }, 100);
+  await new Promise(resolve => setTimeout(resolve, 1800));
+  recorder.stop(); await done;
+  clearInterval(timer); stream.getTracks().forEach(track => track.stop());
+  return URL.createObjectURL(new Blob(chunks, { type: 'video/webm' }));
+}
+function video(src) {
+  const element = document.createElement('video');
+  element.muted = true; element.controls = true; element.src = src;
+  for (const event of ['playing', 'ended', 'enterpictureinpicture', 'leavepictureinpicture']) {
+    element.addEventListener(event, () => log(`${element.dataset.episode}: ${event}`));
+  }
+  return element;
+}
+document.querySelector('#start').onclick = async () => {
+  document.querySelector('#start').disabled = true;
+  const first = document.querySelector('video');
+  await first.play();
+  await FloatingVideo.open(first);
+  // Expire the initial gesture before switching, including on very fast machines.
+  first.loop = true;
+  setTimeout(() => { first.loop = false; }, 6500);
+  first.addEventListener('ended', async () => {
+    const mode = document.querySelector('#mode').value;
+    const next = mode === 'source' ? first : video(clips[1]);
+    if (mode === 'source') next.src = clips[1];
+    else {
+      if (mode === 'remove') first.remove();
+      else first.style.display = 'none';
+      document.querySelector('#player').append(next);
+    }
+    next.dataset.episode = 'second'; next.loop = true;
+    await next.play();
+    setTimeout(() => log(JSON.stringify({ mode,
+      active: !!document.pictureInPictureElement,
+      followsNext: document.pictureInPictureElement === next,
+      gesture: navigator.userActivation.isActive })), 1500);
+  }, { once: true });
+};
+(async () => {
+  clips.push(await clip('blue'), await clip('green'));
+  const first = video(clips[0]); first.dataset.episode = 'first';
+  first.addEventListener('loadedmetadata', () => {
+    document.querySelector('#start').disabled = false;
+  }, { once: true });
+  document.querySelector('#player').append(first);
+})();
+</script>
