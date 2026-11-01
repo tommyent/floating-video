@@ -1,4 +1,6 @@
 (() => {
+  if (globalThis.FloatingVideo?.status) return globalThis.FloatingVideo.status();
+
   function findVideo(root = document) {
     let best = null;
     function visit(current) {
@@ -33,14 +35,41 @@
       throw error;
     }
     video.addEventListener('leavepictureinpicture', restore, { once: true });
+    let transferring = false;
+    const timer = setInterval(async () => {
+      // Use the video's root because document.pictureInPictureElement retargets shadow hosts.
+      const root = video.isConnected ? video.getRootNode() : document;
+      if (root.pictureInPictureElement !== video) {
+        clearInterval(timer);
+        return;
+      }
+      if (transferring) return;
+      const rect = video.getBoundingClientRect();
+      if (video.isConnected && !video.ended && video.readyState > 0 && !video.error &&
+          (!video.paused || rect.width * rect.height > 0)) return;
+      const next = findVideo();
+      if (!next?.playing || next.video === video) return;
+      transferring = true;
+      try {
+        await open(next.video);
+      } catch (error) {
+        console.warn('Floating Video: next-video Picture-in-Picture unavailable.', error.name);
+      } finally {
+        clearInterval(timer);
+      }
+    }, 250);
+    video.addEventListener('leavepictureinpicture', () => clearInterval(timer), { once: true });
   }
 
-  globalThis.FloatingVideo = { findVideo, open };
-  const selected = findVideo();
-  return {
-    active: !!document.pictureInPictureElement,
-    available: !!selected && !!document.pictureInPictureEnabled,
-    playing: selected?.playing ?? false,
-    area: selected?.area ?? 0
-  };
+  function status() {
+    const selected = findVideo();
+    return {
+      active: !!document.pictureInPictureElement,
+      available: !!selected && !!document.pictureInPictureEnabled,
+      playing: selected?.playing ?? false,
+      area: selected?.area ?? 0
+    };
+  }
+  globalThis.FloatingVideo = { findVideo, open, status };
+  return status();
 })();

@@ -21,7 +21,7 @@ function video(area, paused = false, extra = {}) {
 
 function page(elements, extra = {}) {
   const document = { querySelectorAll: () => elements, pictureInPictureEnabled: true, ...extra };
-  const context = vm.createContext({ document });
+  const context = vm.createContext({ document, setInterval: () => 1, clearInterval: () => {} });
   const result = vm.runInContext(source('pip.js'), context);
   return { context, document, result, api: context.FloatingVideo };
 }
@@ -50,8 +50,8 @@ test('paused fallback excludes ended, unloaded, audio-only, errored and zero-siz
 
 test('site opt-out stays removed while PiP is open and returns when it closes or fails', async () => {
   for (const fail of [false, true]) {
-    let leave;
-    const target = video(20, false, { addEventListener: (type, fn) => { if (type === 'leavepictureinpicture') leave = fn; } });
+    const leaves = [];
+    const target = video(20, false, { addEventListener: (type, fn) => { if (type === 'leavepictureinpicture') leaves.push(fn); } });
     target.setAttribute('disablepictureinpicture', 'original');
     target.requestPictureInPicture = async () => {
       assert.equal(target.getAttribute('disablepictureinpicture'), null);
@@ -63,7 +63,7 @@ test('site opt-out stays removed while PiP is open and returns when it closes or
       await promise;
       // Chrome closes PiP the moment the opt-out returns (seen live on Paramount+).
       assert.equal(target.getAttribute('disablepictureinpicture'), null);
-      leave();
+      leaves.forEach(fn => fn());
     }
     assert.equal(target.getAttribute('disablepictureinpicture'), 'original');
   }
