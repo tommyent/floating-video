@@ -10,7 +10,7 @@ The settings page offers optional automatic mode, off by default. Chrome control
 
 Automatic mode can replace a site's media-session PiP handler. After disabling it, reload the site to restore its own handler. It does not register a handler while disabled on a fresh page.
 
-Next-video transfer is implemented for PiP opened by the extension, independently of automatic mode. While PiP remains active, a 250 ms watcher looks for a playing replacement when the current video ends, is removed, becomes unavailable, or is paused and hidden. Closing PiP stops the watcher. If Chrome closes PiP before the replacement is ready, this cannot reopen it without another permitted activation. Navigation and replacement across documents are not covered. These behaviors are checked with simulated APIs; Disney+ and real Chrome episode transitions are still unverified.
+Next-video transfer is implemented for PiP opened by the extension, independently of automatic mode. While PiP remains active, a 250 ms watcher looks for a playing replacement when the current video ends, is removed, becomes unavailable, or is paused and hidden. Closing PiP stops the watcher. If Chrome closes PiP before the replacement is ready, this cannot reopen it without another permitted activation. Navigation and replacement across documents are not covered. Simulated tests cover these behaviors; the bounded Disney+ live result is recorded below.
 
 The manual action temporarily clears a video's PiP opt-out attribute and restores it when the PiP window closes or the request fails (Chrome closes PiP as soon as the attribute returns). It cannot bypass Chrome's restricted pages, Permissions Policy, or other browser restrictions. Errors appear as a **!** toolbar badge with an explanation in the tooltip.
 
@@ -32,11 +32,13 @@ node --test
 
 Tests use Node's built-in runner and simulated Chrome/DOM APIs. They cover video selection, frame targeting, PiP rejection, repeat clicks, automatic-mode settings races, unsupported APIs, settings persistence errors, and packaged asset references.
 
-`test/next-episode.html` is a manual browser fixture for video replacement (with and without removing the old element) and source changes. Serve the repository over localhost and load the fixture in a test Chrome launched with `--mute-audio`. It creates its own short clips and logs whether PiP follows the second episode after the initial gesture expires. It has not yet been run in a live browser.
+`test/next-episode.html` is a manual browser fixture for video replacement (with and without removing the old element) and source changes. Serve the repository over localhost and load the fixture in a test Chrome launched with `--mute-audio`. It creates its own short clips and logs whether PiP follows the second episode after the initial gesture expires. The fixture has not yet been run in real Chrome, including its same-element source-swap case.
 
 The toolbar handler starts script injection immediately and uses Chrome API callbacks through frame selection and the PiP request, keeping asynchronous badge updates out of that path. Regression tests check this call ordering and API-error feedback.
 
-**Live check (Chrome 155, Paramount+, 2026-10-13):** Alt+P opened PiP on a video that carries `disablepictureinpicture`, and the window stayed open; the attribute came back after PiP closed. Before this fix, PiP closed within 3 ms of opening. Other sites, automatic mode, and the settings accessibility tree remain unverified. The test suite establishes simulated logic results, not those browser outcomes.
+**Live check (Chrome 155, Paramount+, 2026-10-13):** Alt+P opened PiP on a video that carries `disablepictureinpicture`, and the window stayed open; the attribute came back after PiP closed. Before this fix, PiP closed within 3 ms of opening. This check did not cover next-episode transfer. Automatic mode and the settings accessibility tree remain unverified. The test suite establishes simulated logic results, not those browser outcomes.
+
+**Disney+ next-episode check (2026-11-01, 10:42–10:43 UTC):** One successful transition was captured with this branch loaded while the tab was hidden. The old video ended and was removed; the document retained its PiP association across an in-page route change and a brief gap with no video. The replacement fired `playing` at 10:43:37.703 and entered PiP at 10:43:37.706. This is consistent with the transfer watcher, but the trace does not identify the caller of the PiP request. An earlier run around 04:40 local time left a black page; a later snapshot found no accessible video or document PiP element. That failure remains unexplained. The successful trace does not establish reliable operation on every Disney+ transition or other streaming sites.
 
 ## Create the private GitHub repository
 
