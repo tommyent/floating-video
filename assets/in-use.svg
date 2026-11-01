@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="580" viewBox="0 0 1100 580" role="img" aria-labelledby="title description">
+  <title id="title">Floating Video: a video beside your work</title>
+  <desc id="description">Illustration, not a screenshot. The actual Floating Video toolbar icon opens a small video window above another page. Alt+P is the keyboard shortcut.</desc>
+  <defs>
+    <symbol id="scene" viewBox="0 0 560 300">
+      <rect width="560" height="300" fill="#c1dbef"/>
+      <circle cx="430" cy="65" r="30" fill="#fff1bd"/>
+      <path d="M0 200 150 55 290 200 390 105 560 235V300H0Z" fill="#5884a0"/>
+      <path d="m89 114 61-59 62 64-40-12-22 12-19-16Z" fill="#edf5fa"/>
+      <path d="M0 225Q130 185 280 225T560 225V300H0Z" fill="#265b78"/>
+      <path d="M0 269Q170 237 340 265T560 260" fill="none" stroke="#8dc5db" stroke-width="5"/>
+    </symbol>
+    <symbol id="toolbar-icon" viewBox="0 0 32 32">
+      <image width="32" height="32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAARklEQVR4nO3PsQ0AIAwDwSzEVNmbmpINwgpYIhCht/T92Zr3eJkBAACgJGDMSEsCnHwKAACAfwHqAAAAIAF2SgHcDAAAAAus4bsHzV9JtQAAAABJRU5ErkJggg=="/>
+    </symbol>
+  </defs>
+  <rect width="1100" height="580" rx="18" fill="#eef2f7"/>
+  <text x="48" y="56" font-family="sans-serif" font-size="26" font-weight="700" fill="#172b45">Keep watching. Keep working.</text>
+  <rect x="48" y="90" width="696" height="398" rx="12" fill="white" stroke="#becbd9" stroke-width="2"/>
+  <path d="M60 90H732Q744 90 744 102V146H48V102Q48 90 60 90Z" fill="#dfe7f0"/>
+  <circle cx="73" cy="118" r="5" fill="#7c8fa4"/>
+  <circle cx="92" cy="118" r="5" fill="#7c8fa4"/>
+  <rect x="126" y="102" width="506" height="32" rx="6" fill="#f8fafc"/>
+  <text x="145" y="124" font-family="sans-serif" font-size="15" fill="#415771">A video page</text>
+  <rect x="667" y="98" width="44" height="40" rx="7" fill="white" stroke="#2e64dd" stroke-width="2"/>
+  <use href="#toolbar-icon" x="673" y="102" width="32" height="32"/>
+  <use href="#scene" x="78" y="166" width="420" height="225"/>
+  <rect x="78" y="413" width="264" height="10" rx="5" fill="#c0ccda"/>
+  <rect x="78" y="438" width="350" height="8" rx="4" fill="#dfe6ee"/>
+  <rect x="78" y="458" width="292" height="8" rx="4" fill="#dfe6ee"/>
+  <text x="772" y="114" font-family="sans-serif" font-size="18" font-weight="700" fill="#244fae">Click the icon</text>
+  <text x="772" y="141" font-family="sans-serif" font-size="17" fill="#415771">or press Alt+P</text>
+  <path d="M744 119H760M938 160Q990 190 965 243" fill="none" stroke="#2e64dd" stroke-width="3"/>
+  <path d="m954 229 11 16 15-13" fill="none" stroke="#2e64dd" stroke-width="3"/>
+  <rect x="480" y="285" width="548" height="242" rx="12" fill="#14283e"/>
+  <text x="510" y="321" font-family="sans-serif" font-size="17" fill="#cfdeed">Your work</text>
+  <path d="M511 350h106m-106 25h146m-146 25h92m-92 25h130m-130 25h80m-80 25h117" stroke="#607c95" stroke-width="7" stroke-linecap="round"/>
+  <rect x="662" y="260" width="352" height="217" rx="10" fill="#0c1724" stroke="#fff" stroke-width="3"/>
+  <use href="#scene" x="672" y="270" width="332" height="178"/>
+  <text x="681" y="466" font-family="sans-serif" font-size="13" fill="#e5eef8">Picture-in-Picture</text>
+  <text x="48" y="552" font-family="sans-serif" font-size="14" fill="#52677f">Illustration, not a screenshot. Uses the extension’s actual toolbar icon.</text>
+</svg>

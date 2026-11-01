@@ -1,8 +1,42 @@
+<img src="assets/icon128.png" width="72" height="72" alt="Floating Video icon">
+
 # Floating Video
 
-A small, dependency-free Chrome extension for video Picture-in-Picture.
+A Chrome extension that puts a video in a small floating window, especially on sites that **don't offer a PiP button or disable it on their player**. Keep watching while you use another tab or app. Some browser and site restrictions still apply.
 
-## Controls
+![Illustration of the Floating Video toolbar icon opening a small video window above another page.](assets/in-use.svg)
+
+*Illustration, not a screenshot. The toolbar icon is the extension's real asset.*
+
+## Install
+
+No build step or package installation is needed. The extension requires desktop Chrome 106 or later; optional automatic mode needs a newer Chrome version.
+
+1. [Download the source ZIP](https://github.com/tommyent/floating-video/archive/refs/heads/main.zip) and extract it, or clone this repository. If a [release](https://github.com/tommyent/floating-video/releases) provides `floating-video.zip`, extract that instead. No release ZIP is published yet.
+2. Open `chrome://extensions` in Chrome and turn on **Developer mode**.
+3. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
+4. Pin **Floating Video** from Chrome's Extensions menu for easy access.
+
+These steps follow [Chrome's unpacked-extension guide](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked). Keep the extracted folder in place. After updating its files, reload the extension and refresh the video page.
+
+## Use
+
+1. Start a video on the page.
+2. Click the **Floating Video** toolbar icon or press **Alt+P**.
+3. Use the same button or shortcut again to close PiP.
+
+For optional automatic opening when you leave a video tab, enable **Open a playing video when I leave its tab** on the extension's settings page. It is off by default. Chrome decides which sites qualify and may ask for permission; see [Chrome's automatic PiP requirements](https://developer.chrome.com/blog/automatic-picture-in-picture-media-playback).
+
+If the toolbar icon shows **!**, hover over it for the error message.
+
+## Limits
+
+- Works with playable HTML video. Chrome's protected pages and a site's Permissions Policy can prevent PiP. Clearing a player's PiP opt-out does not bypass those restrictions.
+- PiP controls come from Chrome and the site. A site can report an infinite video duration, producing a **LIVE** label and no scrubbing even for recorded content. This extension does not add missing seek or next-episode controls.
+- Next-episode carry-over needs a replacement video in the same document while Chrome still holds PiP open. It cannot start an episode the site failed to create or restore PiP after a full navigation.
+- One Disney+ replacement transition was traced successfully while the tab was hidden. An earlier black-page failure remains unexplained. This is not a guarantee for every transition or site; details are below.
+
+## How it works
 
 The toolbar action and **Alt+P** are designed to toggle Picture-in-Picture for the current tab. The implementation chooses one video across accessible frames, preferring playing video, then the largest displayed area. A ready, paused video is a fallback. Open shadow roots are included; closed shadow roots are not accessible.
 
@@ -20,11 +54,11 @@ The manual action temporarily clears a video's PiP opt-out attribute and restore
 - All-site host access: retained for embedded cross-origin videos and automatic mode. Automatic-mode scripts run only in the top frame; manual selection inspects accessible frames on demand.
 - `storage`: sync one boolean setting through Chrome Sync. No video content, browsing history, or analytics is collected or sent by extension code.
 
-This is a new extension identity; settings from the downloaded extension are not migrated. The source contains no remote scripts, dependencies, or store update identity. Icons are original geometric assets.
+The extension contains no remote scripts or runtime dependencies. It uses its own icon assets.
 
 ## Development
 
-No install or build step is required. The repository root is the unpacked extension; `floating-video.zip` contains only runtime files and assets.
+The repository root is the unpacked extension. The local `floating-video.zip` package contains runtime files and icons; it is ignored by Git and is not a published release.
 
 ```sh
 node --test
@@ -38,14 +72,4 @@ The toolbar handler starts script injection immediately and uses Chrome API call
 
 **Live check (Chrome 155, Paramount+, 2026-10-13):** Alt+P opened PiP on a video that carries `disablepictureinpicture`, and the window stayed open; the attribute came back after PiP closed. Before this fix, PiP closed within 3 ms of opening. This check did not cover next-episode transfer. Automatic mode and the settings accessibility tree remain unverified. The test suite establishes simulated logic results, not those browser outcomes.
 
-**Disney+ next-episode check (2026-11-01, 10:42–10:43 UTC):** One successful transition was captured with this branch loaded while the tab was hidden. The old video ended and was removed; the document retained its PiP association across an in-page route change and a brief gap with no video. The replacement fired `playing` at 10:43:37.703 and entered PiP at 10:43:37.706. This is consistent with the transfer watcher, but the trace does not identify the caller of the PiP request. An earlier run around 04:40 local time left a black page; a later snapshot found no accessible video or document PiP element. That failure remains unexplained. The successful trace does not establish reliable operation on every Disney+ transition or other streaming sites.
-
-## Create the private GitHub repository
-
-Run from this directory after committing the prepared files:
-
-```sh
-gh repo create floating-video --private --source=. --remote=origin --push
-```
-
-This creates a private repository in the authenticated GitHub account and pushes the local commit. No remote repository has been created by this task.
+**Disney+ next-episode check (2026-11-01, 10:42–10:43 UTC):** One successful transition was captured with the extension loaded while the tab was hidden. The old video ended and was removed; the document retained its PiP association across an in-page route change and a brief gap with no video. The replacement fired `playing` at 10:43:37.703 and entered PiP at 10:43:37.706. This is consistent with the transfer watcher, but the trace does not identify the caller of the PiP request. An earlier run around 04:40 local time left a black page; a later snapshot found no accessible video or document PiP element. That failure remains unexplained. The successful trace does not establish reliable operation on every Disney+ transition or other streaming sites.
