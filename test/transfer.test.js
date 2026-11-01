@@ -142,3 +142,19 @@ test('uses the shadow root PiP element rather than the document host', async () 
   assert.equal(next.calls, 1);
   assert.equal(p.document.pictureInPictureElement, next);
 });
+
+test('infinite-duration replacement does not require the old video to report ended', async () => {
+  for (const transition of ['removed', 'hidden', 'visible']) {
+    const p = fixture(), first = p.video();
+    first.duration = Infinity;
+    await p.api.open(first);
+    first.paused = true;
+    if (transition === 'removed') first.isConnected = false;
+    if (transition === 'hidden') first.area = 0;
+    const next = p.video(); next.duration = Infinity;
+    await p.tick();
+    assert.equal(first.ended, false);
+    // A visible paused player is indistinguishable from an intentional pause.
+    assert.equal(next.calls, transition === 'visible' ? 0 : 1);
+  }
+});
