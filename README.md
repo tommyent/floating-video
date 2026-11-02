@@ -56,6 +56,8 @@ The manual action temporarily clears a video's PiP opt-out attribute and restore
 
 The extension contains no remote scripts or runtime dependencies. It uses its own icon assets.
 
+Licensed under the [MIT License](LICENSE).
+
 ## Development
 
 The repository root is the unpacked extension. The local `floating-video.zip` package contains runtime files and icons; it is ignored by Git and is not a published release.
